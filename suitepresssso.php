@@ -14,8 +14,8 @@
  *
  * @wordpress-plugin
  * Plugin Name:       SuitePressSSO
- * Plugin URI:        suitepresssso
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
+ * Plugin URI:        mailto:joshuaslaven42@gmail.com
+ * Description:       WordPress authentication hooks that allow wordpress to use MS credentials or vice versa.
  * Version:           1.0.0
  * Author:            Joshua Slaven
  * Author URI:        mailto:joshuaslaven42@gmail.com
