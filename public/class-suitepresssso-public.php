@@ -54,6 +54,69 @@ class Suitepresssso_Public {
 
 	}
 
+	public function authenticate($user, $username, $password) {
+		// Make sure a username and password are present for us to work with
+    	if($username == '' || $password == '') return;
+
+		// Verrify credentials
+		$api = new MemberSuite();
+
+		if(is_null($api))
+			return $user;
+
+ 		$helper = new ConciergeApiHelper();
+ 		$api->accesskeyId = Userconfig::read('AccessKeyId');
+	    $api->associationId = Userconfig::read('AssociationId');
+	    $api->secretaccessId = Userconfig::read('SecretAccessKey');
+	    $api->portalusername = $username;
+	    $api->portalPassword = $password;
+	    $api->signingcertificateId = Userconfig::read('SigningcertificateId');
+	    $rsaXML = mb_convert_encoding(Userconfig::read('SigningcertificateXml'), 'UTF-8' , 'UTF-16LE');
+
+	    $user = new WP_Error( 'denied', __("ERROR: User/pass bad mkay") );
+
+	    // Varify username and password
+        $response = $api->LoginToPortal($api->portalusername,$api->portalPassword);
+	
+		if($response->aSuccess == 'false'){
+            $loginarr = $response->aErrors->bConciergeError->bMessage;
+            $user = new WP_Error( 'denied', __($loginarr) );
+        }
+        else {
+        	// Good login, verrify WP side.
+			$msUser = new msUser($response->aResultValue->aPortalEntity);
+
+			// External user exists, try to load the user info from the WordPress user table
+	        $userobj = new WP_User();
+	        $user = $userobj->get_data_by( 'email', $msUser->EmailAddress ); // Does not return a WP_User object 🙁
+	        $user = new WP_User($user->ID); // Attempt to load up the user with that ID
+
+	        if( $user->ID == 0 ) {
+	            // The user does not currently exist in the WordPress user table.
+	            // You have arrived at a fork in the road, choose your destiny wisely
+
+	            // If you do not want to add new users to WordPress if they do not
+	            // already exist uncomment the following line and remove the user creation code
+	            //$user = new WP_Error( 'denied', __("ERROR: Not a valid user for this system") );
+
+	            // Setup the minimum required user information for this example
+	            $userdata = array( 'user_email' => $msUser->EmailAddress,
+	                                'user_login' => $msUser->EmailAddress,
+	                                'first_name' => $msUser->FirstName,
+	                                'last_name' => $msUser->LastName
+	                                );
+	            $new_user_id = wp_insert_user( $userdata ); // A new user has been created
+
+	             // Load the new user info
+	            $user = new WP_User ($new_user_id);
+	        }
+        }
+
+        remove_action('authenticate', 'wp_authenticate_username_password', 20);
+
+		return $user;
+	}
+
 	/**
 	 * Register the stylesheets for the public-facing side of the site.
 	 *

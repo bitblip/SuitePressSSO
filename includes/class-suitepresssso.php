@@ -119,6 +119,14 @@ class Suitepresssso {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-suitepresssso-public.php';
 
+		/**
+		 * The membersuite sdk
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/ms-sdk/MemberSuite.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/ms-sso/ConciergeApiHelper.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/ms-sso/config.php';
+
+
 		$this->loader = new Suitepresssso_Loader();
 
 	}
@@ -170,6 +178,7 @@ class Suitepresssso {
 
 		$plugin_public = new Suitepresssso_Public( $this->get_plugin_name(), $this->get_version() );
 
+		$this->loader->add_filter('authenticate', $plugin_public, 'authenticate', 10, 3);
 		//$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		//$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
