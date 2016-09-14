@@ -212,7 +212,7 @@ class Suitepresssso_Admin {
 	public function singingcertificatexml_4_callback() {
 		printf(
 			'<textarea class="large-text" rows="10" name="suitepress_sso_option_name[singingcertificatexml_4]" id="singingcertificatexml_4">%s</textarea>',
-			isset( $this->suitepress_sso_options['singingcertificatexml_4'] ) ? esc_attr( $this->suitepress_sso_options['singingcertificatexml_4']) : ''
+			isset( $this->suitepress_sso_options['singingcertificatexml_4'] ) ? $this->suitepress_sso_options['singingcertificatexml_4'] : ''
 		);
 	}
 

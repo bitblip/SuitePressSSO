@@ -179,6 +179,10 @@ class Suitepresssso {
 		$plugin_public = new Suitepresssso_Public( $this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_filter('authenticate', $plugin_public, 'authenticate', 10, 3);
+		$this->loader->add_filter('parse_request', $plugin_public, 'ms_login');
+		$this->loader->add_filter('rewrite_rules_array', $plugin_public, 'ms_login_rewrite_rules');
+		$this->loader->add_filter('query_vars', $plugin_public, 'ms_login_query_vars');
+
 		//$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		//$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 

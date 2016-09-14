@@ -30,7 +30,12 @@ class Suitepresssso_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
+		$rules = get_option( 'rewrite_rules' );
 
+		if ( ! isset( $rules['mssso/login$'] ) ) {
+			global $wp_rewrite;
+		   	$wp_rewrite->flush_rules();
+		}
 	}
 
 }

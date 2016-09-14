@@ -54,6 +54,84 @@ class Suitepresssso_Public {
 
 	}
 
+	// flush_rules() if our rules are not yet included
+	public function my_flush_rules(){
+		$rules = get_option( 'rewrite_rules' );
+
+		if ( ! isset( $rules['mssso/login$'] ) ) {
+			global $wp_rewrite;
+		   	$wp_rewrite->flush_rules();
+		}
+	}
+
+	public function ms_login_query_vars($vars) {
+	    $vars[] = 'mssso';
+	    return $vars;
+	}
+
+	public function ms_login($wp)
+	{
+		// only process requests with "my-plugin=ajax-handler"
+	    if (array_key_exists('mssso', $wp->query_vars) && $wp->query_vars['mssso'] == 'login') {
+
+	    	// Verrify credentials
+			$api = new MemberSuite();
+
+			if(is_null($api))
+				return $user;
+
+	 		$helper = new ConciergeApiHelper();
+	 		$api->accesskeyId = Userconfig::read('AccessKeyId');
+		    $api->associationId = Userconfig::read('AssociationId');
+		    $api->secretaccessId = Userconfig::read('SecretAccessKey');
+		    $api->portalusername = $username;
+		    $api->signingcertificateId = Userconfig::read('SigningcertificateId');
+		    $rsaXML = html_entity_decode(Userconfig::read('SigningcertificateXml'));
+
+		    $current_user = wp_get_current_user();
+
+		    // Use helper class to generate signature		    
+		    $api->digitalsignature = $helper->DigitalSignature($current_user->user_login, $rsaXML);
+
+	    	// Create Token for sso
+		    $response = $api->CreatePortalSecurityToken($current_user->user_login, $api->signingcertificateId, $api->digitalsignature);
+		    
+		    if($response->aSuccess=='false')
+		    {
+		      return $response->aErrors->bConciergeError->bMessage;
+		    }
+		    
+		    $securityToken = $response->aResultValue;
+
+		    ?>
+				<form name="LoginForm" method="post" id="LoginForm" action="<?php echo Userconfig::read('PortalUrl');?>Login.aspx">
+				    <input type="text" name="Token" id="Token" value="<?php echo $securityToken;?>" />
+				        
+					<!--Once logged into Membersuite, jump to this URL-->
+					<input type="text" name="NextUrl" id="NextUrl" value="directory/SearchDirectory_Criteria.aspx" />
+
+					<!--In the MemberSuite Portal header, provide a return link to a custom URL-->
+				    <input type="text" name="ReturnUrl" id="ReturnUrl" value="default.aspx" />
+					<input type="text" name="ReturnText" id="ReturnText" />
+					
+					<!--On logout from the MemberSuite Portal, redirect to this URL rather than the default login page-->
+					<input type="text" name="LogoutUrl" id="LogoutUrl" />
+				</form>
+		    <?php
+
+			wp_die('', 'Portal Redirect');
+	    }
+	}
+
+	public function kill_sidebar($sidebar_output) {
+		return '<h1>Sidebar</h1>';
+	}
+
+	public function mssso_loginform($content) {
+
+
+	}
+
 	public function authenticate($user, $username, $password) {
 		// Make sure a username and password are present for us to work with
     	if($username == '' || $password == '') return;
@@ -101,7 +179,7 @@ class Suitepresssso_Public {
 
 	            // Setup the minimum required user information for this example
 	            $userdata = array( 'user_email' => $msUser->EmailAddress,
-	                                'user_login' => $msUser->EmailAddress,
+	                                'user_login' => $username,
 	                                'first_name' => $msUser->FirstName,
 	                                'last_name' => $msUser->LastName
 	                                );
@@ -112,7 +190,7 @@ class Suitepresssso_Public {
 	        }
         }
 
-        remove_action('authenticate', 'wp_authenticate_username_password', 20);
+        //remove_action('authenticate', 'wp_authenticate_username_password', 20);
 
 		return $user;
 	}
