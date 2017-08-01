@@ -54,6 +54,11 @@ class Suitepresssso_Public {
 
 	}
 
+	public function ms_login_rewrite_rules($rules)
+	{
+
+	}
+
 	// flush_rules() if our rules are not yet included
 	public function my_flush_rules(){
 		$rules = get_option( 'rewrite_rules' );
@@ -190,9 +195,26 @@ class Suitepresssso_Public {
 	        }
         }
 
+    	// Uncomment to disable local authentication.
         //remove_action('authenticate', 'wp_authenticate_username_password', 20);
 
 		return $user;
+	}
+
+	function login_redirect($redirect_to, $request, $user) {
+
+		//is there a user to check?
+		if ( isset( $user->roles ) && is_array( $user->roles ) ) {
+			//check for admins
+			if ( in_array( 'administrator', $user->roles ) ) {
+				// redirect them to the default place
+				return $redirect_to;
+			} else {
+				return home_url();
+			}
+		} else {
+			return $redirect_to;
+		}
 	}
 
 	/**
