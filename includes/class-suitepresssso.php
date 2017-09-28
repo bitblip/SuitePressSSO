@@ -124,7 +124,7 @@ class Suitepresssso {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/ms-sdk/MemberSuite.php';
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/ms-sso/ConciergeApiHelper.php';
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/ms-sso/config.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-userconfig.php';
 
 
 		$this->loader = new Suitepresssso_Loader();

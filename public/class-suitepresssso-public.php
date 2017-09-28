@@ -141,6 +141,7 @@ class Suitepresssso_Public {
 		// Make sure a username and password are present for us to work with
     	if($username == '' || $password == '') return;
 
+
 		// Verrify credentials
 		$api = new MemberSuite();
 
@@ -156,11 +157,11 @@ class Suitepresssso_Public {
 	    $api->signingcertificateId = Userconfig::read('SigningcertificateId');
 	    $rsaXML = mb_convert_encoding(Userconfig::read('SigningcertificateXml'), 'UTF-8' , 'UTF-16LE');
 
-	    $user = new WP_Error( 'denied', __("ERROR: User/pass bad mkay") );
+        $user = new WP_Error( 'denied', __("ERROR: Username or password was invalid.") );
 
 	    // Varify username and password
         $response = $api->LoginToPortal($api->portalusername,$api->portalPassword);
-	
+
 		if($response->aSuccess == 'false'){
             $loginarr = $response->aErrors->bConciergeError->bMessage;
             $user = new WP_Error( 'denied', __($loginarr) );
