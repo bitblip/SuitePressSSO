@@ -180,7 +180,7 @@ class Suitepresssso {
 
 		$this->loader->add_filter('authenticate', $plugin_public, 'authenticate', 10, 3);
 		$this->loader->add_filter('parse_request', $plugin_public, 'ms_login');
-		$this->loader->add_filter('rewrite_rules_array', $plugin_public, 'ms_login_rewrite_rules');
+		$this->loader->add_filter('rewrite_rules_array', $plugin_public, 'ms_login_rewrite_rules', 30, 1);
 		$this->loader->add_filter('query_vars', $plugin_public, 'ms_login_query_vars');
 		$this->loader->add_filter('login_redirect', $plugin_public, 'login_redirect', 10, 3 );
 
