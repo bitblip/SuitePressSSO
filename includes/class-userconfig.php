@@ -15,8 +15,9 @@ class Userconfig{
                         'AssociationId' => $suitepress_sso_options['associationid_1'],
                         'SecretAccessKey' => $suitepress_sso_options['secretaccesskey_2'],
                         'SigningcertificateId' => $suitepress_sso_options['signingcertificateid_3'],
-                        'SigningcertificatePath' => $suitepress_sso_options['singingcertificatexml_4'],
-                        'PortalUrl' => $suitepress_sso_options['portalurl_5']
+                        'SigningcertificateXml' => $suitepress_sso_options['singingcertificatexml_4'],
+                        'PortalUrl' => $suitepress_sso_options['portalurl_5'],
+                        'WPUsers' => $suitepress_sso_options['wpusers_6']
                         );
 
         

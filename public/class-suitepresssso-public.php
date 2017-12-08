@@ -70,7 +70,8 @@ class Suitepresssso_Public {
 	}
 
 	public function ms_login_query_vars($vars) {
-	    $vars[] = 'mssso';
+		$vars[] = 'mssso';
+		$vars[] = 'returnUrl';
 	    return $vars;
 	}
 
@@ -81,50 +82,85 @@ class Suitepresssso_Public {
 
 	    	// Verrify credentials
 			$api = new MemberSuite();
+			$current_user = wp_get_current_user();
 
-			if(is_null($api))
-				return $user;
+			if(!$current_user->exists()) {
+				auth_redirect();
+				return;
+			}
+
+			$returnUrl = '/default.aspx';
+			if(array_key_exists('returnUrl', $wp->query_vars)) {
+				$returnUrl =  $wp->query_vars['returnUrl'];
+			}
 
 	 		$helper = new ConciergeApiHelper();
 	 		$api->accesskeyId = Userconfig::read('AccessKeyId');
 		    $api->associationId = Userconfig::read('AssociationId');
 		    $api->secretaccessId = Userconfig::read('SecretAccessKey');
-		    $api->portalusername = $username;
+		    $api->portalusername = $current_user->user_email;
 		    $api->signingcertificateId = Userconfig::read('SigningcertificateId');
-		    $rsaXML = html_entity_decode(Userconfig::read('SigningcertificateXml'));
+			$rsaXML = html_entity_decode(Userconfig::read('SigningcertificateXml'));
+			$rsaXMLDecoded = htmlspecialchars_decode($rsaXML);
 
-		    $current_user = wp_get_current_user();
+			// Are we creating/maintaining portal users?
+			if(Userconfig::read('WPUsers') !== null) {
+				$msPortalUser = $api->SearchAndGetOrCreatePortalUser($current_user->user_email);
+				if(empty((array)$msPortalUser->aResultValue)) {
+					// Get a description of the MemberSuite Individual object
+					$individualObjectResponse = $api->DescribeObject($objectType = 'Individual');
+					// Create the MemberSuiteObject
+					$mso = $api->FromClassMetadata($individualObjectResponse->aResultValue);
+
+					// Create individual
+					$msIndividual = new msIndividual($mso);
+					$msIndividual->FirstName = $current_user->first_name;
+					$msIndividual->LastName = $current_user->last_name;
+					$msIndividual->EmailAddress = $current_user->user_email;
+					$saveIndividualResult = $api->save($msIndividual);
+				}
+			}
+
 
 		    // Use helper class to generate signature		    
-		    $api->digitalsignature = $helper->DigitalSignature($current_user->user_login, $rsaXML);
+		    $api->digitalsignature = $helper->DigitalSignature($current_user->user_email, $rsaXMLDecoded);
 
+			
 	    	// Create Token for sso
-		    $response = $api->CreatePortalSecurityToken($current_user->user_login, $api->signingcertificateId, $api->digitalsignature);
+		    $response = $api->CreatePortalSecurityToken($current_user->user_email, $api->signingcertificateId, $api->digitalsignature);
 		    
 		    if($response->aSuccess=='false')
 		    {
-		      return $response->aErrors->bConciergeError->bMessage;
+				wp_die($response->aErrors->bConciergeError->bMessage, 'Portal Login');
+				return $response->aErrors->bConciergeError->bMessage;
 		    }
 		    
 		    $securityToken = $response->aResultValue;
 
 		    ?>
-				<form name="LoginForm" method="post" id="LoginForm" action="<?php echo Userconfig::read('PortalUrl');?>Login.aspx">
-				    <input type="text" name="Token" id="Token" value="<?php echo $securityToken;?>" />
+				<?php get_header(); ?>
+				<h1 style="text-align:center">Please wait while we log you into the portal.</h1>
+				<form name="LoginForm" method="post" id="LoginForm" action="<?php echo Userconfig::read('PortalUrl');?>/Login.aspx">
+				    <input type="hidden" name="Token" id="Token" value="<?php echo $securityToken;?>" />
 				        
 					<!--Once logged into Membersuite, jump to this URL-->
-					<input type="text" name="NextUrl" id="NextUrl" value="directory/SearchDirectory_Criteria.aspx" />
+					<input type="hidden" name="NextUrl" id="NextUrl" value="<?php echo $returnUrl ?>" />
 
 					<!--In the MemberSuite Portal header, provide a return link to a custom URL-->
-				    <input type="text" name="ReturnUrl" id="ReturnUrl" value="default.aspx" />
-					<input type="text" name="ReturnText" id="ReturnText" />
+				    <input type="hidden" name="ReturnUrl" id="ReturnUrl" value="<?php echo get_site_url() ?>" />
+					<input type="hidden" name="ReturnText" id="ReturnText" />
 					
 					<!--On logout from the MemberSuite Portal, redirect to this URL rather than the default login page-->
-					<input type="text" name="LogoutUrl" id="LogoutUrl" />
+					<input type="hidden" name="LogoutUrl" id="LogoutUrl" value="<?php echo wp_logout_url(home_url()) ?>" />
 				</form>
+				<script>
+					document.LoginForm.submit();
+				</script>    
+				<?php get_footer(); ?>
 		    <?php
 
-			wp_die('', 'Portal Redirect');
+			wp_die('Portal Login', 'Portal Login');
+			return 'Portal Login';
 	    }
 	}
 
@@ -139,7 +175,11 @@ class Suitepresssso_Public {
 
 	public function authenticate($user, $username, $password) {
 		// Make sure a username and password are present for us to work with
-    	if($username == '' || $password == '') return;
+		if($username == '' || $password == '') return;
+		
+		if(Userconfig::read('WPUsers') !== null) {
+			return $user;
+		}
 
 
 		// Verrify credentials
@@ -155,7 +195,6 @@ class Suitepresssso_Public {
 	    $api->portalusername = $username;
 	    $api->portalPassword = $password;
 	    $api->signingcertificateId = Userconfig::read('SigningcertificateId');
-	    $rsaXML = mb_convert_encoding(Userconfig::read('SigningcertificateXml'), 'UTF-8' , 'UTF-16LE');
 
         $user = new WP_Error( 'denied', __("ERROR: Username or password was invalid.") );
 
