@@ -1,6 +1,8 @@
 # SuitePressSSO
 WordPress Member Suite integration
 
+> **The project is no longer supported. If anyone would like ownership of this, or knows of an alternative, please let me.**
+
 ## Installing
 1. Copy plugin source to 'SuitePress' directory inside the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
